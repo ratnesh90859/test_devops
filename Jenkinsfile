@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        PATH = "/opt/homebrew/bin:${env.PATH}"
+    }
+
     parameters {
         string(name: 'VM_IP', description: 'The Public IP address of the GCP VM created by Terraform')
     }
