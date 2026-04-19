@@ -1,0 +1,16 @@
+# Terraform files
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.tfstate.lock.info
+.terraformrc
+terraform.rc
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+
+# Mac
+.DS_Store
