@@ -36,9 +36,9 @@ pipeline {
             steps {
                 // Using the SSH Private Key securely generated on your Mac
                 // We use StrictHostKeyChecking=no to automatically accept the new VM's identity
-                sh '''
+                sh """
                 scp -o StrictHostKeyChecking=no -i /Users/ratneshsingh/.ssh/gcp_jenkins_rsa -r frontend/dist/* jenkins@${params.VM_IP}:/var/www/html/
-                '''
+                """
             }
         }
     }
