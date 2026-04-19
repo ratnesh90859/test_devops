@@ -1,9 +1,9 @@
-output "website_url" {
-  description = "The public URL to access your deployed React application."
-  value       = "http://storage.googleapis.com/${google_storage_bucket.website.name}/index.html"
+output "vm_public_ip" {
+  description = "The public IP address of the newly created VM."
+  value       = google_compute_instance.react_vm.network_interface.0.access_config.0.nat_ip
 }
 
-output "bucket_name" {
-  description = "The name of the generated GCS bucket. Use this in your Jenkins CI/CD pipeline."
-  value       = google_storage_bucket.website.name
+output "website_url" {
+  description = "The URL to access your deployed React application."
+  value       = "http://${google_compute_instance.react_vm.network_interface.0.access_config.0.nat_ip}"
 }

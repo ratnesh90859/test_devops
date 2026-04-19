@@ -1,32 +1,58 @@
-# Generate a random string to ensure the bucket name is globally unique
-resource "random_id" "bucket_suffix" {
-  byte_length = 4
+# We use the default network instead of creating a complex VPC for simplicity
+data "google_compute_network" "default" {
+  name = "default"
 }
 
-# The Cloud Storage Bucket configured to host a static website
-resource "google_storage_bucket" "website" {
-  name          = "${var.bucket_name_prefix}-${random_id.bucket_suffix.hex}"
-  location      = var.region
-  force_destroy = true # Allows deleting the bucket even if it contains objects (useful for testing/learning)
+# Firewall rule to allow HTTP (port 80) and SSH (port 22)
+resource "google_compute_firewall" "web_firewall" {
+  name    = "allow-http-ssh"
+  network = data.google_compute_network.default.name
 
-  website {
-    main_page_suffix = "index.html"
-    not_found_page   = "index.html" # For React Router support (SPA)
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "22"]
   }
 
-  cors {
-    origin          = ["*"]
-    method          = ["GET", "HEAD", "OPTIONS"]
-    response_header = ["*"]
-    max_age_seconds = 3600
-  }
+  source_ranges = ["0.0.0.0/0"] # Allow traffic from anywhere
 }
 
-# Make the objects inside the bucket publicly readable
-resource "google_storage_bucket_iam_binding" "public_rule" {
-  bucket = google_storage_bucket.website.name
-  role   = "roles/storage.objectViewer"
-  members = [
-    "allUsers",
-  ]
+# The Virtual Machine Instance
+resource "google_compute_instance" "react_vm" {
+  name         = "react-todo-vm"
+  machine_type = "e2-micro" # Free tier eligible
+  zone         = var.zone
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-12"
+      size  = 10 # 10GB disk
+    }
+  }
+
+  network_interface {
+    network = data.google_compute_network.default.name
+    # Assigns a public External IP
+    access_config {}
+  }
+
+  # Add SSH key explicitly so Jenkins can securely access the VM
+  metadata = {
+    ssh-keys = "${var.ssh_user}:${file("~/.ssh/gcp_jenkins_rsa.pub")}"
+  }
+
+  # Startup script runs once when VM boots up for the first time.
+  # We install Nginx and prepare the folder for Jenkins to write to.
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    apt-get update
+    apt-get install -y nginx
+
+    # Create the folder and make our Jenkins user the owner so it can write files
+    mkdir -p /var/www/html
+    chown -R jenkins:jenkins /var/www/html
+    chmod -R 755 /var/www/html
+    
+    systemctl enable nginx
+    systemctl start nginx
+  EOT
 }

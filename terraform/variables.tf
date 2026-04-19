@@ -10,8 +10,14 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "bucket_name_prefix" {
-  description = "Prefix for the GCS bucket name"
+variable "zone" {
+  description = "The zone to deploy the VM in"
   type        = string
-  default     = "todo-react-app"
+  default     = "us-central1-a"
+}
+
+variable "ssh_user" {
+  description = "SSH Username for Jenkins to log in as"
+  type        = string
+  default     = "jenkins"
 }
